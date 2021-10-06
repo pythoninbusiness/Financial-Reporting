@@ -1,5 +1,5 @@
 """
-# Purpose: To create a python script that will later be run by Windows Task Scheduler (or cron) to monitor a root folder for any changes in the files within. 
+Purpose: To create a python script that will later be run by Windows Task Scheduler (or cron) to monitor a root folder for any changes in the files within. 
 The reason being changes made to support files may not be reflected in the live document (i.e., Workiva Workdesk). 
 The script will send an email with a list of all the files that have been modified since the last time the program was run. 
 """
