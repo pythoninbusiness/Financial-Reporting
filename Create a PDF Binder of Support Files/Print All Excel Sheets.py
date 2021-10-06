@@ -10,7 +10,7 @@ import glob
 import os, re
 
 
-root_folder = r"N:\Accounting\CLNS\SEC Reporting\2021 Q3\Support\2020 Q3 Disc Ops Comparative"
+root_folder = r"Root Path"
 download_folder = r".\PDF Folder"
 os.chdir(root_folder)
 
