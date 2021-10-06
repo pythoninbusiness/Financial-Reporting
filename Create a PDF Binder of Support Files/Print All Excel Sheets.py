@@ -1,6 +1,6 @@
 """
-Purpose: This script will go through a root folder and find all folders inside the root folder. Then the program loops through each 
-folder to gather all the excel files and prints out the first sheet into a PDF (stored in our download folder). 
+Purpose: This script will go through a root folder and find folders inside the root folder. Then the program loops through each 
+folder to gather all the excel files and prints out the first sheet into a separate PDF (stored in our download folder). 
 
 The program finally combines all the PDF's into one pdf with bookmarks.
 """
