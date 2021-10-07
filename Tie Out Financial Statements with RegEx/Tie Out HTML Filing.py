@@ -42,6 +42,25 @@ output = f"""
         tieOutValues.forEach(el => el.addEventListener('click', event => {{
             el.classList.toggle("hide-tie-out");
         }}));
+	
+	function tieOutSelection() {{
+            var newSpan = document.createElement('span');
+            newSpan.setAttribute('class', 'tie-out');
+
+            selection_object = window.getSelection()
+            selection_text = selection_object.toString()
+            newSpan.textContent = selection_text;
+
+            var range = selection_object.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(newSpan);
+        }}
+
+        document.addEventListener('keydown', function (event) {{
+            if (event.key === 't') {{
+                tieOutSelection();
+            }}
+        }})
     </script>
     </body>
 </html>
