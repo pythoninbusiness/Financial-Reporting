@@ -3,6 +3,10 @@ Purpose: To take a an HTML financial document (i.e., 10-Q) and tie out all numbe
 The script uses regular expressions, so depending on how the Company writes their disclosures and reports, one may need to update the regular expression to catch all. 
 
 The output file is an HTML file which can then be printed into a PDF and further tied out.
+
+Note 1: To tie out additional text: Highlight text and hit "T" on your keyboard
+Note 2: To toggle tie out boxes, click on the element. 
+Note 3: If you added additional tie outs, you need to use the function addListeners() in the console.
 """
 
 
@@ -37,11 +41,14 @@ output = f"""
     {html_text}
 
      <script>
-        const tieOutValues = document.querySelectorAll('.tie-out');
+        function addListeners() {{
+            var tieOutValues = document.querySelectorAll('.tie-out');
+            tieOutValues.forEach(el => el.addEventListener('click', event => {{
+                el.classList.toggle("hide-tie-out");
+            }}));
+        }};
 
-        tieOutValues.forEach(el => el.addEventListener('click', event => {{
-            el.classList.toggle("hide-tie-out");
-        }}));
+        addListeners();
 	
 	function tieOutSelection() {{
             var newSpan = document.createElement('span');
