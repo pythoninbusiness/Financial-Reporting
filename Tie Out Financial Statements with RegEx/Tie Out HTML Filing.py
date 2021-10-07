@@ -16,7 +16,6 @@ with open(file_path, 'r') as file_:
 html_text = re.sub("&#160;", " ", html_text)
 html_text = re.sub(r"(\$[\d,\.]*) (million|billion|thousand)*", "<span class='tie-out'>" + r"\g<0>" + "</span>", html_text)
 html_text = re.sub(r"([\d,\.]+ shares)", "<span class='tie-out'>" + r"\g<0>" + "</span>", html_text)
-html_text = re.sub(r"(\d+,\d\d\d[,\d\d\d]* \w+)", "<span class='tie-out'>" + r"\g<0>" + "</span>", html_text)
 html_text = re.sub(r"\s([\d\.\,]+\%)", " <span class='tie-out'>" + r"\g<1>" + "</span>", html_text)
 
 output = f"""
