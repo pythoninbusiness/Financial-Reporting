@@ -1,0 +1,85 @@
+<html>
+     <head>
+         <style>
+         .tie-out {
+            border: 2px solid red;
+            padding: 1px;
+            position: relative;
+         }
+         .reference::before{
+            background: #333;
+            background: rgba(75,75,75, 0.85);
+            border-radius: 5px;
+            color: #fff;
+            content: attr(data-tooltip);
+            padding: 5px;
+            position: absolute;
+            z-index: 999;
+            left: 50%;
+            top: 0;
+            transform: translate(-60%, -120%);
+            white-space: nowrap;
+        }
+        .reference::after{
+            border: solid;
+            border-color: #4b4b4b transparent;
+            border-width: 8px 8px 0 8px;
+            content: "";
+            position: absolute;
+            z-index: 99;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%)
+        }
+        .hide-tie-out {
+            border: none !important;
+            position: unset;
+         }
+         .hide-tie-out.reference::after {
+            content: unset;
+         }
+         </style>
+     </head>
+
+     <body>
+        {{ html_text | safe }}
+     </body>
+
+     <script>
+         function addListeners() {
+             var tieOutValues = document.querySelectorAll('.tie-out');
+             tieOutValues.forEach(el => {
+                 el.addEventListener('click', event => {
+                    // do something to edit the data-tooltip attributes
+                    // var currentAttr = el.getAttribute("data-tooltip") 
+                    // el.setAttribute("data-tooltip", "changed tooltip")
+                 });
+             });
+             tieOutValues.forEach(el => {
+                 el.addEventListener('dblclick', event => {
+                     el.classList.toggle("hide-tie-out");
+                 });
+             });
+         };
+
+         addListeners();
+        
+         function tieOutSelection() {
+             var newSpan = document.createElement('span');
+             newSpan.setAttribute('class', 'tie-out');
+
+             selection_object = window.getSelection()
+             selection_text = selection_object.toString()
+             newSpan.textContent = selection_text;
+
+             var range = selection_object.getRangeAt(0);
+             range.deleteContents();
+             range.insertNode(newSpan);
+         }
+
+         document.addEventListener('keydown', function (event) {
+             if (event.key === 't') {
+                 tieOutSelection();
+             }
+         })
+        </script>
+ </html>
