@@ -1,85 +1,347 @@
 <html>
      <head>
+         <title>{{ document_name }}</title>
          <style>
-         .tie-out {
-            border: 2px solid red;
-            padding: 1px;
-            position: relative;
-         }
-         .reference::before{
-            background: #333;
-            background: rgba(75,75,75, 0.85);
-            border-radius: 5px;
-            color: #fff;
-            content: attr(data-tooltip);
-            padding: 5px;
-            position: absolute;
-            z-index: 999;
-            left: 50%;
-            top: 0;
-            transform: translate(-60%, -120%);
-            white-space: nowrap;
-        }
-        .reference::after{
-            border: solid;
-            border-color: #4b4b4b transparent;
-            border-width: 8px 8px 0 8px;
-            content: "";
-            position: absolute;
-            z-index: 99;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100%)
-        }
-        .hide-tie-out {
-            border: none !important;
-            position: unset;
-         }
-         .hide-tie-out.reference::after {
-            content: unset;
-         }
+            @media screen {
+                body {
+                    background-color: #f4f4f4;
+                }
+                .report {
+                    padding: 20px 30px;
+                    width: max(50vw, 700px);
+                    margin: auto;
+                    background-color: white;
+                }
+            }
+            .tie-out {
+                border: 2px solid red;
+                padding: 1px;
+                position: relative;
+                display: inline-block;
+                text-indent: 0;
+            }
+            .reference::before{
+                background: rgba(75,75,75, 0.85);
+                border-radius: 5px;
+                color: #fff;
+                content: attr(data-tooltip);
+                padding: 5px;
+                position: absolute;
+                z-index: 999;
+                left: 50%;
+                top: 0;
+                transform: translate(-60%, -130%);
+                white-space: nowrap;
+                font-size: 11px;
+                text-indent: initial;
+                max-width: 100px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .reference::after {
+                border: solid;
+                border-color: #4b4b4b transparent;
+                border-width: 8px 8px 0 8px;
+                content: "";
+                position: absolute;
+                z-index: 99;
+                left: 50%;
+                top: 0;
+                transform: translateX(-50%) translateY(-110%)
+            }
+            .multiple-reference::before {
+                background: rgba(176, 204, 235, 0.85);
+                color: black;
+            }
+            .ref-not-found::before {
+                background: rgba(236, 186, 186, 0.85);
+                color: black;
+            }
+            .ref-not-found::after {
+                border-color: rgba(223, 168, 168, 0.85) transparent;
+            }
+            .hide-tie-out {
+                border-left: none !important;
+                border-top: none !important;
+                border-right: none !important;
+                position: unset;
+            }
+            .hide-tie-out.reference::after {
+                content: unset;
+            }
+            .update-panel {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: max(25vw, 400px);
+                padding: 50px 30px;
+                height: 100vh;
+                background-color: #f4f4f4;
+                transition: all .3s ease-in-out;
+                z-index: 1000;
+                transform: translateX(0);
+            }
+            .panel-hidden {
+                transform: translateX(100%);
+            }
+            input {
+                padding: 10px 15px;
+                border: none;
+                border-radius: 5px;
+                margin: 10px 0;
+                width: 100%;
+            }
+            .quickTags button {
+                padding: 3px 15px;
+                max-width: 100px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .button {
+                padding: 10px 20px;
+                width: 100%;
+                margin-top: 20px;
+            }
+            .contextMenu {
+                position: fixed;
+                z-index: 10000;
+                width: 150px;
+                background-color: #1b1a1a;
+                border-radius: 5px;
+                display: none;
+            }
+            .contextMenu .item {
+                padding: 8px 10px;
+                font-size: 15px;
+                color: #eee;
+                cursor: pointer;
+                border-radius: inherit;
+            }
+            .contextMenu .item:hover {
+                background-color: #343434;
+            }
+            .contextMenu.visible {
+                display: block;
+            }
          </style>
      </head>
 
-     <body>
-        {{ html_text | safe }}
+     <body style="position: relative;">
+
+        <!-- To add info on what we can do in document -->
+        <!-- Add tie out box, edit references, hide/unhide tie out box -->
+        
+        <section class="report">
+            {{ html_text | safe }}
+        </section>
+
+        <aside class="update-panel panel-hidden">
+            <h2 style="font-size: 1.1em;">Updating - <span id="updating-number" style="font-weight: lighter;"></span></h2>
+            <br>
+            <p style="font-size: 1.1em;">
+                <span style="user-select: none;">Current Reference: </span><span id="current-reference"></span>
+            </p>
+            <br>
+            <div class="quickTags">
+                <button onclick="newReference.value = 'PY';submitChanges()">PY</button>
+                <button onclick="newReference.value = 'PQ';submitChanges()">PQ</button>
+                <button onclick="newReference.value = 'Rx';submitChanges()">Rx</button>
+                <button onclick="newReference.value = prevTag1;submitChanges()" id="prevTag1">FS1.0</button>
+                <button onclick="newReference.value = prevTag2;submitChanges()" id="prevTag2">BS</button>
+            </div>
+            <br>
+            <input id="new-reference" placeholder="new reference">
+            <br>
+            <button onclick="submitChanges()" class="button">Submit Changes</button>
+            <button onclick="panel.classList.toggle('panel-hidden'); referenceObject = null;" class="button">Close</button>
+        </aside>
+
+        <div class="contextMenu">
+            <div onclick="editTag()" class="item">Edit Tag</div>
+            <div onclick="toggleTag()" class="item">Toggle Tag</div>
+            <div onclick="deleteTag()" class="item">Delete Tag</div>
+        </div>
+
      </body>
 
+
+     <!-- Functions -->
      <script>
-         function addListeners() {
-             var tieOutValues = document.querySelectorAll('.tie-out');
-             tieOutValues.forEach(el => {
-                 el.addEventListener('click', event => {
-                    // do something to edit the data-tooltip attributes
-                    // var currentAttr = el.getAttribute("data-tooltip") 
-                    // el.setAttribute("data-tooltip", "changed tooltip")
-                 });
-             });
-             tieOutValues.forEach(el => {
-                 el.addEventListener('dblclick', event => {
-                     el.classList.toggle("hide-tie-out");
-                 });
-             });
-         };
+        var referenceObject = null;
+        var panel = document.querySelector(".update-panel");
+        var windowBody = document.querySelector("body");
+        var report = document.querySelector('.report');
+        var contextMenu = document.querySelector(".contextMenu");
+        var newReference = document.querySelector("#new-reference");
+        var selectionAreaObject = null;
+        var prevTag1 = null;
+        var prevTag2 = null;
 
-         addListeners();
-        
-         function tieOutSelection() {
-             var newSpan = document.createElement('span');
-             newSpan.setAttribute('class', 'tie-out');
+        var tieOutValues = document.querySelectorAll('.tie-out');
 
-             selection_object = window.getSelection()
-             selection_text = selection_object.toString()
-             newSpan.textContent = selection_text;
+        function submitChanges() {
+            var newReferenceValue = document.querySelector("#new-reference").value
+            if (newReferenceValue.length > 0) {
+                referenceObject.setAttribute("data-tooltip", newReferenceValue)
+                if (referenceObject.classList.contains("ref-not-found")) {
+                    referenceObject.classList.toggle("ref-not-found");
+                } else if (referenceObject.classList.contains("multiple-reference")) {
+                    referenceObject.classList.toggle("multiple-reference");
+                }
+                newReference.value = "";
+            }
+            panel.classList.toggle("panel-hidden");
+            referenceObject = null;
+            prevTag2 = prevTag1;
+            prevTag1 = newReferenceValue;
+            if (prevTag1 != null ) {
+                document.querySelector("#prevTag1").innerHTML = prevTag1
+            }
+            if (prevTag2 != null ) {
+                document.querySelector("#prevTag2").innerHTML = prevTag2
+            }
+        };
 
-             var range = selection_object.getRangeAt(0);
-             range.deleteContents();
-             range.insertNode(newSpan);
-         }
+        function tieOutSelection() {
+            let selection = window.getSelection()
+            // if selection container starts with T, that is going to reference tbody,tr,td
+            if (selection.toString().length > 1 & !selection.getRangeAt(0).commonAncestorContainer.nodeName.startsWith("T")) {
+                var newSpan = document.createElement('span');
+                newSpan.setAttribute('class', 'tie-out reference ref-not-found');
+                newSpan.setAttribute('data-tooltip', 'n/a');
 
-         document.addEventListener('keydown', function (event) {
-             if (event.key === 't') {
-                 tieOutSelection();
-             }
-         })
-        </script>
+                selection_object = selection.getRangeAt(0);
+                var selection_content = selection_object.extractContents();
+                newSpan.appendChild(selection_content);
+                selection_object.insertNode(newSpan);
+            }
+        };
+
+        function editTag() {
+            contextMenu.classList.remove("visible");
+            if (referenceObject != null) {
+                if (panel.classList.contains("panel-hidden")) {
+                    panel.classList.remove("panel-hidden");
+                }
+
+                let currentReference = referenceObject.dataset.tooltip;
+
+                if (currentReference.includes(";")) {
+                    var list = document.createElement("ul");
+                    currentReference.split(";").forEach(reference => {
+                        let listItem = document.createElement("li");
+                        listItem.innerHTML = reference;
+                        list.append(listItem);
+                    })
+                    document.querySelector("#current-reference").innerHTML = list.innerHTML;
+                } else {
+                    document.querySelector("#current-reference").innerHTML = referenceObject.dataset.tooltip
+                }
+
+                if (referenceObject.tagName == "TABLE") {
+                    document.querySelector("#updating-number").innerHTML = referenceObject.children[0].children[1].children[0].textContent;
+                } else {
+                    document.querySelector("#updating-number").innerHTML = referenceObject.textContent;
+                }
+            }
+        }
+
+        function toggleTag() {
+            contextMenu.classList.remove("visible");
+            if (selectionAreaObject != null) {
+                if (selectionAreaObject.tagName == "LI") {
+                    return
+                }
+                var allTieOuts = selectionAreaObject.querySelectorAll(".tie-out");
+                allTieOuts.forEach((reference) => {
+                    reference.classList.toggle("hide-tie-out");
+                })
+                selectionAreaObject = null;
+            } else {
+                if (referenceObject != null) {
+                    referenceObject.classList.toggle("hide-tie-out");
+                    referenceObject = null;
+                }
+            }
+        }
+
+        function deleteTag() {
+            // when clicking on context menu, text is deselected, so we preserve on right click
+            contextMenu.classList.remove("visible");
+            if (selectionAreaObject != null) {
+                if (selectionAreaObject.tagName == "LI") {
+                    return
+                }
+                var allTieOuts = selectionAreaObject.querySelectorAll(".tie-out");
+                allTieOuts.forEach((reference) => {
+                    reference.classList.remove("tie-out");
+                    reference.classList.remove("reference");
+                })
+                selectionAreaObject = null;
+            } else {
+                if (referenceObject != null) {
+                    referenceObject.classList.remove("tie-out");
+                    referenceObject.classList.remove("reference");
+                    referenceObject = null;
+                }
+            }
+        }
+
+     </script>
+
+     <!-- Logic -->
+     <script>
+        report.addEventListener('contextmenu', event => {
+            event.preventDefault();
+
+            const { clientX: mouseX, clientY: mouseY }  = event;
+            contextMenu.style.top = `${mouseY}px`;
+            contextMenu.style.left = `${mouseX}px`;
+            contextMenu.classList.add("visible");
+
+            if (event.target.classList.contains("tie-out")) {
+                referenceObject = event.target;
+            }
+            if (window.getSelection().toString().length > 1) {
+                selectionAreaObject = window.getSelection()["baseNode"].parentElement;
+            }
+        });
+
+        windowBody.addEventListener("click", event => {
+            if (event.target.offsetParent != contextMenu) {
+                contextMenu.classList.remove("visible");
+            }
+        })
+
+        report.addEventListener('click', event => {
+            // Tie out tables on click
+            if (window.getSelection().toString().length > 1) {
+                return
+            }
+            if (event.target.tagName == "TD") {
+                if (event.target.offsetParent) {
+                    event.target.offsetParent.setAttribute('class', 'tie-out reference ref-not-found');
+                    event.target.offsetParent.setAttribute('data-tooltip', 'n/a');
+                }
+            } else if (event.target.parentElement.tagName == "TD") {
+                if (event.target.offsetParent.offsetParent) {
+                    event.target.offsetParent.offsetParent.setAttribute('class', 'tie-out reference ref-not-found');
+                    event.target.offsetParent.offsetParent.setAttribute('data-tooltip', 'n/a');
+                }
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 't') {
+                tieOutSelection();
+            }
+        });
+
+        newReference.addEventListener("keyup", function(event) {
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+                submitChanges();
+            }
+        });
+    </script>
  </html>
