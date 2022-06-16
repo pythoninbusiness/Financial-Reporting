@@ -1,0 +1,146 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Development</title>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <link rel="stylesheet" href="./custom/custom.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <py-env>
+        - jinja2
+        - lxml
+        - paths:
+            - ./data/tie-out-template.html
+            - ./modules/beautifulsoup4-4.11.1-py3-none-any.whl
+    </py-env>
+  <style>
+      .ͼ1 .cm-line {
+          padding: 2px 10px;
+      }
+      .output {
+          margin-top: 30px;
+      }
+  </style>
+</head>
+
+<body style="display: flex; justify-content: center;">
+    <div style="width: min(50%, 750px); padding: 30px;">
+        <header style="display:flex; justify-content: space-between; margin-top: 30px;">
+            <h1 style="font-size: 1.3em; font-weight: bolder;">
+                Tie Out Filing
+            </h1>
+
+            <div>
+                <button id="uploadButton">Upload Filing</button>
+                <button id="loadButton">Load Template</button>
+            </div>
+        </header>
+        <br>
+        <div>
+            <h2><b>File Name: </b><span id="filename"></span></h2>
+        </div>
+        <br>
+        <main>
+            <br>
+            <py-repl></py-repl>
+            <br>
+        </main>
+        <py-script>
+            import jinja2
+            import asyncio
+            import re
+            from bs4 import BeautifulSoup
+            from js import document, Object, window
+            from pyodide import create_proxy, to_js
+
+            def tag_numbers(html_text):
+                html_text = re.sub("&#160;", " ", html_text)
+
+                # paragraph numbers
+                html_text = re.sub(r"(\$[\d,\.]+) (million|billion|thousand)*", "<span class='tie-out'>" + r"\g<0>" + "</span>", html_text)
+
+                # paragraph units/shares
+                html_text = re.sub(r"([\d,\.]+ shares)", "{{span class='tie-out'}}" + r"\g<0>" + "{{/span}}", html_text)
+                html_text = re.sub(r"([\d,\.]+ [\w+]* shares)", "{{span class='tie-out'}}" + r"\g<0>" + "{{/span}}", html_text)
+                html_text = re.sub(r"([\d,\.]+ units)", "{{span class='tie-out'}}" + r"\g<0>" + "{{/span}}", html_text)
+                html_text = re.sub(r"([\d,\.]+ [\w+]* units)", "{{span class='tie-out'}}" + r"\g<0>" + "{{/span}}", html_text)
+
+                # paragraph percentages
+                html_text = re.sub(r'([\d\.\,]+\%)[^"<]', " {{span class='tie-out'}}" + r"\g<1>" + "{{/span}}", html_text)
+                return html_text
+            
+
+            def allow_html_tags(html_text):
+                """Pyscript currently removes all html tags, so this is a workaround"""
+                html_text = re.sub("{{", "<", html_text)
+                html_text = re.sub("}}", ">", html_text)
+                return html_text
+
+
+            def add_css_classes(html_text):
+                soup = BeautifulSoup(html_text, "lxml")
+                tie_out_numbers = soup.find_all("span", {"class": "tie-out"})
+                for number in tie_out_numbers:
+                    number["data-tooltip"] = "not found"
+                    number["class"] += ["reference", "ref-not-found"]
+                return str(soup)
+        </py-script>
+        <py-script>
+            import jinja2
+            import asyncio
+            import re
+            from js import document, Object, window
+            from pyodide import create_proxy, to_js
+
+            document_name = "tieout.html"
+            uploaded_file = None
+
+            env = jinja2.Environment(loader=jinja2.FileSystemLoader("./"))
+            template = env.get_template("tie-out-template.html")
+
+            
+            async def upload_filing(event):
+                try:
+                    uploaded_files_js = await window.showOpenFilePicker();
+                    global uploaded_file
+                    uploaded_file = uploaded_files_js[0]
+                    pyscript.write('filename', uploaded_file.name)
+                except Exception as e:
+                    console.log('Exception: ' + str(e))
+                    return
+
+
+            async def load_template(event):
+                try:
+                    file_object = await uploaded_file.getFile()
+                    html_text = await file_object.text()
+
+                    html_text = tag_numbers(html_text)
+                    html_text = allow_html_tags(html_text)
+                    html_text = add_css_classes(html_text)
+
+                    output = template.render(html_text=html_text, document_name=document_name.replace(".html", ""))
+
+                    options = {
+                        "startIn": "downloads",
+                        "suggestedName": document_name
+                    }
+                    fileHandle = await window.showSaveFilePicker(Object.fromEntries(to_js(options)))
+                    file = await fileHandle.createWritable()
+                    await file.write(output)
+                    await file.close()
+                except Exception as e:
+                    console.log('Exception: ' + str(e))
+                    return
+            
+            file_upload_proxy = create_proxy(upload_filing)
+            load_template_proxy = create_proxy(load_template)
+
+            # Set the listener to the callback
+            document.getElementById("uploadButton").addEventListener("click", file_upload_proxy, False)
+            document.getElementById("loadButton").addEventListener("click", load_template_proxy, False)
+        </py-script>
+        
+    </div>
+</body>
+</html>
